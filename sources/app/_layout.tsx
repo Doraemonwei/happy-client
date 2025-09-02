@@ -4,8 +4,6 @@ import * as React from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Fonts from 'expo-font';
 import { FontAwesome } from '@expo/vector-icons';
-import { AuthCredentials, TokenStorage } from '@/auth/tokenStorage';
-import { AuthProvider } from '@/auth/AuthContext';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { initialWindowMetrics, SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,6 +23,7 @@ import { StatusBarProvider } from '@/components/StatusBarProvider';
 // import * as SystemUI from 'expo-system-ui';
 import { monkeyPatchConsoleForRemoteLoggingForFasterAiAutoDebuggingOnlyInLocalBuilds } from '@/utils/remoteLogger';
 import { useUnistyles } from 'react-native-unistyles';
+import { AuthProvider } from '@/auth/AuthContext';
 
 export {
     // Catch any errors thrown by the Layout component.
@@ -86,7 +85,7 @@ export default function RootLayout() {
     //
     // Init sequence
     //
-    const [initState, setInitState] = React.useState<{ credentials: AuthCredentials | null } | null>(null);
+    const [initState, setInitState] = React.useState<boolean>(false);
     React.useEffect(() => {
         (async () => {
             try {
@@ -146,13 +145,21 @@ export default function RootLayout() {
                     })();
                 }
                 await sodium.ready;
-                const credentials = await TokenStorage.getCredentials();
-                console.log('credentials', credentials);
-                if (credentials) {
+                
+                // Single-user mode: initialize sync with fixed credentials
+                console.log('Single-user mode: initializing sync with fixed credentials');
+                const credentials = { 
+                    token: 'single-user-mode', 
+                    secret: 'single-user-mode' 
+                };
+                try {
                     await syncRestore(credentials);
+                    console.log('Single-user mode: sync initialized successfully');
+                } catch (error) {
+                    console.error('Single-user mode: sync initialization failed:', error);
                 }
 
-                setInitState({ credentials });
+                setInitState(true);
             } catch (error) {
                 console.error('Error initializing:', error);
             }
@@ -187,9 +194,9 @@ export default function RootLayout() {
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>
             <KeyboardProvider>
                 <GestureHandlerRootView style={{ flex: 1 }}>
-                    <AuthProvider initialCredentials={initState.credentials}>
-                        <ThemeProvider value={navigationTheme}>
-                            <StatusBarProvider />
+                    <ThemeProvider value={navigationTheme}>
+                        <StatusBarProvider />
+                        <AuthProvider>
                             <ModalProvider>
                                 <CommandPaletteProvider>
                                     <RealtimeProvider>
@@ -199,8 +206,8 @@ export default function RootLayout() {
                                     </RealtimeProvider>
                                 </CommandPaletteProvider>
                             </ModalProvider>
-                        </ThemeProvider>
-                    </AuthProvider>
+                        </AuthProvider>
+                    </ThemeProvider>
                 </GestureHandlerRootView>
             </KeyboardProvider>
         </SafeAreaProvider>

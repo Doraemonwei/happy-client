@@ -1,38 +1,27 @@
-export function decodeBase64(base64: string, encoding: 'base64' | 'base64url' = 'base64'): Uint8Array {
-    let normalizedBase64 = base64;
-    
-    if (encoding === 'base64url') {
-        normalizedBase64 = base64
-            .replace(/-/g, '+')
-            .replace(/_/g, '/');
-        
-        const padding = normalizedBase64.length % 4;
-        if (padding) {
-            normalizedBase64 += '='.repeat(4 - padding);
+// Single-user mode: simplified base64 utilities
+
+export function encodeBase64(data: string | Uint8Array, encoding?: string): string {
+    if (typeof data === 'string') {
+        return btoa(data);
+    } else {
+        // Convert Uint8Array to string then encode
+        let binary = '';
+        for (let i = 0; i < data.length; i++) {
+            binary += String.fromCharCode(data[i]);
         }
+        return btoa(binary);
     }
-    
-    const binaryString = atob(normalizedBase64);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    
-    for (let i = 0; i < len; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
+}
+
+export function decodeBase64(encoded: string, encoding?: string): Uint8Array {
+    const binary = atob(encoded);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
     }
-    
     return bytes;
 }
 
-export function encodeBase64(buffer: Uint8Array, encoding: 'base64' | 'base64url' = 'base64'): string {
-    const binaryString = String.fromCharCode.apply(null, Array.from(buffer));
-    const base64 = btoa(binaryString);
-    
-    if (encoding === 'base64url') {
-        return base64
-            .replace(/\+/g, '-')
-            .replace(/\//g, '_')
-            .replace(/=/g, '');
-    }
-    
-    return base64;
+export function decodeBase64ToString(encoded: string): string {
+    return atob(encoded);
 }

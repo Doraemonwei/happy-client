@@ -1,4 +1,3 @@
-import { useAuth } from '@/auth/AuthContext';
 import * as React from 'react';
 import { Drawer } from 'expo-router/drawer';
 import { useIsTablet } from '@/utils/responsive';
@@ -7,9 +6,9 @@ import { Slot } from 'expo-router';
 import { useWindowDimensions } from 'react-native';
 
 export const SidebarNavigator = React.memo(() => {
-    const auth = useAuth();
     const isTablet = useIsTablet();
-    const showPermanentDrawer = auth.isAuthenticated && isTablet;
+    // Single-user mode: always authenticated
+    const showPermanentDrawer = isTablet;
     const { width: windowWidth } = useWindowDimensions();
 
     // Calculate drawer width only when needed

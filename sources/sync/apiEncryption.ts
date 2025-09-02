@@ -1,63 +1,50 @@
-import sodium from 'react-native-libsodium';
-import { decodeBase64, encodeBase64 } from '@/auth/base64';
+// Single-user mode: simplified encryption (no actual encryption)
 import { AgentState, AgentStateSchema, Metadata, MetadataSchema } from './storageTypes';
-import { decryptSecretBox, encryptSecretBox } from '@/encryption/libsodium';
-import { deriveKey } from '@/encryption/deriveKey';
-import { encodeHex } from '@/encryption/hex';
 import { EncryptionCache } from './encryptionCache';
 
 export class ApiEncryption {
 
     static async create(secretKeyBase64url: string, cache?: EncryptionCache) {
-
-        // Load key
-        const secretKey = decodeBase64(secretKeyBase64url, 'base64url');
-        if (secretKey.length !== 32) {
-            throw new Error(`Invalid secret key length: ${secretKey.length}, expected 32`);
-        }
-
-        // Derive anonymous ID
-        const anonID = encodeHex((await deriveKey(secretKey, 'Happy Coder', ['analytics', 'id']))).slice(0, 16).toLowerCase();
-
-        return new ApiEncryption(secretKey, anonID, cache);
+        // Single-user mode: return simple instance
+        const anonID = 'single-user-anon-id';
+        return new ApiEncryption(anonID, cache);
     }
 
-    secretKey: Uint8Array;
     anonID: string;
+    secretKey: Uint8Array; // Mock for compatibility
     private cache: EncryptionCache;
 
-    constructor(secretKey: Uint8Array, anonID: string, cache?: EncryptionCache) {
-        this.secretKey = secretKey;
+    constructor(anonID: string, cache?: EncryptionCache) {
         this.anonID = anonID;
+        this.secretKey = new Uint8Array(32); // Mock 32-byte key
         this.cache = cache || new EncryptionCache();
         Object.freeze(this);
     }
 
-    decryptMetadata(sessionId: string, version: number, encryptedMetadata: string): Metadata | null {
+    decryptMetadata(sessionId: string, version: number, plainMetadata: string): Metadata | null {
         // Check cache first
         const cached = this.cache.getCachedMetadata(sessionId, version);
         if (cached) {
             return cached;
         }
 
-        // Decrypt if not cached
-        const encryptedData = decodeBase64(encryptedMetadata, 'base64');
-        const decrypted = decryptSecretBox(encryptedData, this.secretKey);
-        if (!decrypted) {
-            return null;
-        }
-        const parsed = MetadataSchema.safeParse(decrypted);
-        if (!parsed.success) {
-            return null;
-        }
+        // Parse plain JSON metadata
+        try {
+            const parsed = MetadataSchema.safeParse(JSON.parse(plainMetadata));
+            if (!parsed.success) {
+                return null;
+            }
 
-        // Cache the result
-        this.cache.setCachedMetadata(sessionId, version, parsed.data);
-        return parsed.data;
+            // Cache the result
+            this.cache.setCachedMetadata(sessionId, version, parsed.data);
+            return parsed.data;
+        } catch {
+            return null;
+        }
     }
 
-    decryptAgentState(sessionId: string, version: number, encryptedAgentState: string | null | undefined): AgentState {
-        if (!encryptedAgentState) {
+    decryptAgentState(sessionId: string, version: number, plainAgentState: string | null | undefined): AgentState {
+        if (!plainAgentState) {
             return {};
         }
 
@@ -67,41 +54,31 @@ export class ApiEncryption {
             return cached;
         }
 
-        // Decrypt if not cached
-        const encryptedData = decodeBase64(encryptedAgentState, 'base64');
-        const decrypted = decryptSecretBox(encryptedData, this.secretKey);
-        if (!decrypted) {
-            return {};
-        }
-        const parsed = AgentStateSchema.safeParse(decrypted);
-        if (!parsed.success) {
-            return {};
-        }
+        // Parse plain JSON agent state
+        try {
+            const parsed = AgentStateSchema.safeParse(JSON.parse(plainAgentState));
+            if (!parsed.success) {
+                return {};
+            }
 
-        // Cache the result
-        this.cache.setCachedAgentState(sessionId, version, parsed.data);
-        return parsed.data;
+            // Cache the result
+            this.cache.setCachedAgentState(sessionId, version, parsed.data);
+            return parsed.data;
+        } catch {
+            return {};
+        }
     }
 
     encryptRaw(data: any): string {
-        try {
-            const encrypted = encryptSecretBox(data, this.secretKey);
-            return encodeBase64(encrypted, 'base64');
-        } catch (error) {
-            console.error('Encryption failed:', error);
-            throw error;
-        }
+        // Single-user mode: return plain JSON
+        return JSON.stringify(data);
     }
 
-    decryptRaw(encryptedContent: string): any | null {
+    decryptRaw(plainContent: string): any | null {
+        // Single-user mode: parse plain JSON
         try {
-            const encryptedData = decodeBase64(encryptedContent, 'base64');
-            const decrypted = decryptSecretBox(encryptedData, this.secretKey);
-            if (!decrypted) {
-                return null;
-            }
-            return decrypted;
-        } catch (error) {
+            return JSON.parse(plainContent);
+        } catch {
             return null;
         }
     }

@@ -1,6 +1,4 @@
 import { io, Socket } from 'socket.io-client';
-import { TokenStorage } from '@/auth/tokenStorage';
-import { ApiEncryption } from './apiEncryption';
 
 //
 // Types
@@ -8,7 +6,6 @@ import { ApiEncryption } from './apiEncryption';
 
 export interface SyncSocketConfig {
     endpoint: string;
-    token: string;
 }
 
 export interface SyncSocketState {
@@ -28,7 +25,6 @@ class ApiSocket {
     // State
     private socket: Socket | null = null;
     private config: SyncSocketConfig | null = null;
-    private encryption: ApiEncryption | null = null;
     private messageHandlers: Map<string, (data: any) => void> = new Map();
     private reconnectedListeners: Set<() => void> = new Set();
     private statusListeners: Set<(status: 'disconnected' | 'connecting' | 'connected' | 'error') => void> = new Set();
@@ -38,9 +34,8 @@ class ApiSocket {
     // Initialization
     //
 
-    initialize(config: SyncSocketConfig, encryption: ApiEncryption) {
+    initialize(config: SyncSocketConfig) {
         this.config = config;
-        this.encryption = encryption;
         this.connect();
     }
 
@@ -57,10 +52,6 @@ class ApiSocket {
 
         this.socket = io(this.config.endpoint, {
             path: '/v1/updates',
-            auth: {
-                token: this.config.token,
-                clientType: 'user-scoped' as const
-            },
             transports: ['websocket'],
             reconnection: true,
             reconnectionDelay: 1000,
@@ -114,10 +105,10 @@ class ApiSocket {
     async rpc<R, A>(listernerId: string, method: string, params: A): Promise<R> {
         const result = await this.socket!.emitWithAck('rpc-call', {
             method: `${listernerId}:${method}`,
-            params: this.encryption!.encryptRaw(params)
+            params: JSON.stringify(params)
         });
         if (result.ok) {
-            return this.encryption?.decryptRaw(result.result) as R;
+            return JSON.parse(result.result) as R;
         }
         throw new Error('RPC call failed');
     }
@@ -143,30 +134,21 @@ class ApiSocket {
             throw new Error('SyncSocket not initialized');
         }
 
-        const credentials = await TokenStorage.getCredentials();
-        if (!credentials) {
-            throw new Error('No authentication credentials');
-        }
-
         const url = `${this.config.endpoint}${path}`;
-        const headers = {
-            'Authorization': `Bearer ${credentials.token}`,
-            ...options?.headers
-        };
-
+        
         return fetch(url, {
             ...options,
-            headers
+            headers: options?.headers
         });
     }
 
     //
-    // Token Management
+    // Connection Update
     //
 
-    updateToken(newToken: string) {
-        if (this.config && this.config.token !== newToken) {
-            this.config.token = newToken;
+    updateConfig(newConfig: SyncSocketConfig) {
+        if (this.config && this.config.endpoint !== newConfig.endpoint) {
+            this.config = newConfig;
 
             if (this.socket) {
                 this.disconnect();

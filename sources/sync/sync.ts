@@ -1289,7 +1289,7 @@ async function syncInit(credentials: AuthCredentials, restore: boolean) {
 
     // Initialize socket connection
     const API_ENDPOINT = getServerUrl();
-    apiSocket.initialize({ endpoint: API_ENDPOINT, token: credentials.token }, encryption);
+    apiSocket.initialize({ endpoint: API_ENDPOINT });
 
     // Wire socket status to storage
     apiSocket.onStatusChange((status) => {

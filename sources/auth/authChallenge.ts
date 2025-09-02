@@ -1,9 +1,25 @@
-import { getRandomBytes } from 'expo-crypto';
-import sodium from 'react-native-libsodium';
+// Single-user mode: simplified auth challenge
 
-export function authChallenge(secret: Uint8Array) {
-    const keypair = sodium.crypto_sign_seed_keypair(secret);
-    const challenge = getRandomBytes(32);
-    const signature = sodium.crypto_sign_detached(challenge, keypair.privateKey);
-    return { challenge, signature, publicKey: keypair.publicKey };
+export interface AuthChallengeRequest {
+    publicKey: string;
+}
+
+export interface AuthChallengeResponse {
+    challenge: string;
+    signature: string;
+    publicKey: string;
+}
+
+export function createAuthChallenge(secretKey: Uint8Array): AuthChallengeResponse {
+    // Single-user mode: return mock challenge response
+    return {
+        challenge: 'single-user-mode-challenge',
+        signature: 'single-user-mode-signature',
+        publicKey: 'single-user-mode-public-key'
+    };
+}
+
+export function verifyAuthChallenge(response: AuthChallengeResponse): boolean {
+    // Single-user mode: always valid
+    return true;
 }
