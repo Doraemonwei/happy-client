@@ -449,8 +449,26 @@ export const storage = create<StorageState>()((set, get) => {
                     hasReadyEvent = true;
                 }
 
-                // Merge messages
+                // Merge messages with localId-based deduplication
                 const mergedMessagesMap = { ...existingSession.messagesMap };
+                
+                // First, remove any existing messages with matching localId (to handle optimistic updates)
+                if (processedMessages.some(msg => msg.localId)) {
+                    Object.keys(mergedMessagesMap).forEach(messageId => {
+                        const existingMessage = mergedMessagesMap[messageId];
+                        if (existingMessage.localId) {
+                            // Check if any new message has the same localId
+                            const hasMatchingLocalId = processedMessages.some(newMsg => 
+                                newMsg.localId && newMsg.localId === existingMessage.localId
+                            );
+                            if (hasMatchingLocalId) {
+                                delete mergedMessagesMap[messageId];
+                            }
+                        }
+                    });
+                }
+                
+                // Then add the new messages
                 processedMessages.forEach(message => {
                     mergedMessagesMap[message.id] = message;
                 });

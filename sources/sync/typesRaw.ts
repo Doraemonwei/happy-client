@@ -169,7 +169,12 @@ export type NormalizedMessage = ({
     usage?: UsageData,
 };
 
-export function normalizeRawMessage(id: string, localId: string | null, createdAt: number, raw: RawRecord): NormalizedMessage | null {
+export function normalizeRawMessage(id: string, localId: string | null, createdAt: number, raw: RawRecord | null): NormalizedMessage | null {
+    // Handle null or undefined raw content
+    if (!raw) {
+        return null;
+    }
+    
     if (raw.role === 'user') {
         return {
             id,
