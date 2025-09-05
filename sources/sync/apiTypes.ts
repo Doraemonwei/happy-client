@@ -10,8 +10,8 @@ export const ApiMessageSchema = z.object({
     seq: z.number(),
     localId: z.string().nullish(),
     content: z.object({
-        t: z.literal('encrypted'),
-        c: z.string(), // Base64 encoded encrypted content
+        t: z.union([z.literal('encrypted'), z.literal('plain')]),
+        c: z.string(), // Base64 encoded encrypted content OR plain JSON string
     }),
     createdAt: z.number(),
 });

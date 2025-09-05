@@ -8,7 +8,7 @@ import type { ApiEphemeralUpdate, ApiEphemeralActivityUpdate } from './apiTypes'
 import { DecryptedMessage, Session, Machine } from './storageTypes';
 import { InvalidateSync } from '@/utils/sync';
 import { ActivityUpdateAccumulator } from './reducer/activityUpdateAccumulator';
-import { randomUUID } from 'expo-crypto';
+// UUID not needed in single-user mode
 import * as Notifications from 'expo-notifications';
 import { registerPushToken } from './apiPush';
 import { Platform, AppState } from 'react-native';
@@ -113,7 +113,7 @@ class Sync {
         this.credentials = credentials;
         this.encryption = encryption;
         this.anonID = encryption.anonID;
-        this.serverID = parseToken(credentials.token);
+        this.serverID = credentials.token === 'single-user-mode' ? 'single-user' : parseToken(credentials.token);
         await this.#init();
     }
 
@@ -191,8 +191,8 @@ class Sync {
         const permissionMode = session.permissionMode || 'default';
         const modelMode = session.modelMode || 'default';
 
-        // Generate local ID
-        const localId = randomUUID();
+        // Generate proper localId for message deduplication in single-user mode
+        const localId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
         // Determine sentFrom based on platform
         let sentFrom: string;
@@ -253,10 +253,15 @@ class Sync {
                 fallbackModel
             }
         };
-        const encryptedRawRecord = encryption.encryptRawRecord(content);
 
-        // Add to messages - normalize the raw record
+        // In single-user mode, send plain text instead of encrypted
+        const messageContent = this.serverID === 'single-user' ? 
+            JSON.stringify(content) : 
+            encryption.encryptRawRecord(content);
+
+        // Add to messages immediately for UI responsiveness - normalize the raw record
         const createdAt = Date.now();
+        // Use localId as temporary ID for immediate display, will be replaced by server response
         const normalizedMessage = normalizeRawMessage(localId, localId, createdAt, content);
         if (normalizedMessage) {
             this.applyMessages(sessionId, [normalizedMessage]);
@@ -265,7 +270,7 @@ class Sync {
         // Send message with optional permission mode and source identifier
         apiSocket.send('message', {
             sid: sessionId,
-            message: encryptedRawRecord,
+            message: messageContent,
             localId,
             sentFrom,
             permissionMode: permissionMode || 'default'

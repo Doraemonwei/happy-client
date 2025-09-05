@@ -69,6 +69,42 @@ export class SessionEncryption {
                     createdAt: encryptedMessage.createdAt,
                 }
             }
+        } else if (encryptedMessage.content.t === 'plain') {
+            // Handle plain text messages (unencrypted but might still be base64 encoded)
+            try {
+                let contentString = encryptedMessage.content.c;
+                
+                // Check if it looks like base64 and try to decode it first
+                if (contentString && /^[A-Za-z0-9+/=]+$/.test(contentString) && contentString.length % 4 === 0) {
+                    try {
+                        // Try to decode as base64
+                        const decoded = atob(contentString);
+                        // If successful, use decoded string for JSON parsing
+                        contentString = decoded;
+                    } catch (decodeError) {
+                        // If base64 decode fails, use original string
+                        console.log('Base64 decode failed, using original string');
+                    }
+                }
+                
+                const parsed = JSON.parse(contentString);
+                decryptedMessage = {
+                    id: encryptedMessage.id,
+                    seq: encryptedMessage.seq,
+                    localId: encryptedMessage.localId ?? null,
+                    content: parsed,
+                    createdAt: encryptedMessage.createdAt,
+                }
+            } catch (error) {
+                console.error(`Failed to parse plain message content:`, error);
+                decryptedMessage = {
+                    id: encryptedMessage.id,
+                    seq: encryptedMessage.seq,
+                    localId: encryptedMessage.localId ?? null,
+                    content: null,
+                    createdAt: encryptedMessage.createdAt,
+                }
+            }
         } else {
             decryptedMessage = {
                 id: encryptedMessage.id,
