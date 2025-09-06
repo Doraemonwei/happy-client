@@ -50,8 +50,16 @@ class ApiSocket {
 
         this.updateStatus('connecting');
 
-        this.socket = io(this.config.endpoint, {
-            path: '/v1/updates',
+        // Parse the endpoint URL to extract base URL and path prefix
+        const url = new URL(this.config.endpoint);
+        const baseURL = `${url.protocol}//${url.host}`;
+        const pathPrefix = url.pathname === '/' ? '' : url.pathname;
+        const socketPath = `${pathPrefix}/v1/updates`;
+
+        console.log(`WebSocket connecting to: ${baseURL} with path: ${socketPath}`);
+
+        this.socket = io(baseURL, {
+            path: socketPath,
             transports: ['websocket'],
             reconnection: true,
             reconnectionDelay: 1000,
