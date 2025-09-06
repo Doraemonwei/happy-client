@@ -3,6 +3,10 @@
 const DEFAULT_SERVER_URL = process.env.EXPO_PUBLIC_HAPPY_SERVER_URL || 'https://lanpangzi-3005.cpolar.top';
 
 export function getServerUrl(): string {
+    // Single-user mode: use relative path for same-host deployment
+    if (typeof window !== 'undefined' && !process.env.EXPO_PUBLIC_HAPPY_SERVER_URL) {
+        return window.location.origin;
+    }
     return DEFAULT_SERVER_URL;
 }
 
