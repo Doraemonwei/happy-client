@@ -1,5 +1,5 @@
 import * as React from "react";
-import { AvatarSkia } from "./AvatarSkia";
+import { AvatarSkia } from "./AvatarSkia.web";
 import { AvatarGradient } from "./AvatarGradient";
 import { AvatarBrutalist } from "./AvatarBrutalist";
 import { useSetting } from '@/sync/storage';

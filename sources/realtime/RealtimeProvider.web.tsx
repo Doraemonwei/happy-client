@@ -1,5 +1,5 @@
 import React from 'react';
-import { RealtimeVoiceSession } from './RealtimeVoiceSession';
+import { RealtimeVoiceSession } from './RealtimeVoiceSession.web';
 
 export const RealtimeProvider = ({ children }: { children: React.ReactNode }) => {
     return (

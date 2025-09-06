@@ -453,13 +453,13 @@ export const storage = create<StorageState>()((set, get) => {
                 const mergedMessagesMap = { ...existingSession.messagesMap };
                 
                 // First, remove any existing messages with matching localId (to handle optimistic updates)
-                if (processedMessages.some(msg => msg.localId)) {
+                if (processedMessages.some(msg => 'localId' in msg && msg.localId)) {
                     Object.keys(mergedMessagesMap).forEach(messageId => {
                         const existingMessage = mergedMessagesMap[messageId];
-                        if (existingMessage.localId) {
+                        if ('localId' in existingMessage && existingMessage.localId) {
                             // Check if any new message has the same localId
                             const hasMatchingLocalId = processedMessages.some(newMsg => 
-                                newMsg.localId && newMsg.localId === existingMessage.localId
+                                'localId' in newMsg && newMsg.localId && 'localId' in existingMessage && newMsg.localId === existingMessage.localId
                             );
                             if (hasMatchingLocalId) {
                                 delete mergedMessagesMap[messageId];
