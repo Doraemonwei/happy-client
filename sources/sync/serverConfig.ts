@@ -1,12 +1,20 @@
 // Single-user mode: simplified server configuration
 
-const DEFAULT_SERVER_URL = process.env.EXPO_PUBLIC_HAPPY_SERVER_URL || 'https://lanpangzi-3005.cpolar.top';
+const DEFAULT_SERVER_URL = process.env.EXPO_PUBLIC_HAPPY_SERVER_URL || 'https://192.168.31.116:3005';
 
 export function getServerUrl(): string {
-    // Single-user mode: use relative path for same-host deployment
-    if (typeof window !== 'undefined' && !process.env.EXPO_PUBLIC_HAPPY_SERVER_URL) {
-        return window.location.origin;
+    // If explicitly set via environment variable, use that
+    if (process.env.EXPO_PUBLIC_HAPPY_SERVER_URL) {
+        return process.env.EXPO_PUBLIC_HAPPY_SERVER_URL;
     }
+    
+    // In web environment, use current origin + /server for reverse proxy
+    if (typeof window !== 'undefined') {
+        console.log("server url: window.location.origin + '/server'");
+        return window.location.origin + '/server';
+    }
+    
+    // Fallback for non-web environments
     return DEFAULT_SERVER_URL;
 }
 
