@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Item } from './Item';
 import { ItemGroup } from './ItemGroup';
 import { useUnistyles } from 'react-native-unistyles';
-import { useUpdates } from '@/hooks/useUpdates';
+import { useUpdates } from '@/hooks/webReplacements';
 import { useChangelog } from '@/hooks/useChangelog';
 import { useRouter } from 'expo-router';
 import { t } from '@/text';

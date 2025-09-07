@@ -16,7 +16,7 @@ import { sync } from '@/sync/sync';
 import { isUsingCustomServer } from '@/sync/serverConfig';
 import { trackPaywallButtonClicked } from '@/track';
 import { Modal } from '@/modal';
-import { useMultiClick } from '@/hooks/useMultiClick';
+import { useMultiClick } from '@/hooks/webReplacements';
 import { useAllMachines } from '@/sync/storage';
 import { isMachineOnline } from '@/utils/machineUtils';
 import { useUnistyles } from 'react-native-unistyles';

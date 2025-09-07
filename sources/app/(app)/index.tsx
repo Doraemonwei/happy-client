@@ -1,11 +1,11 @@
 import { RoundButton } from "@/components/RoundButton";
 import { useAuth } from "@/auth/AuthContext";
-import { ActivityIndicator, Text, View, Image, Platform } from "react-native";
+import { ActivityIndicator, Text, View, Image } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as React from 'react';
 import { encodeBase64 } from "@/auth/base64";
 import { authGetToken } from "@/auth/authGetToken";
-import { useUpdates } from "@/hooks/useUpdates";
+import { useUpdates } from "@/hooks/webReplacements";
 import { UpdateBanner } from "@/components/UpdateBanner";
 import { SessionsList } from "@/components/SessionsList";
 import { router, Stack, useRouter } from "expo-router";
@@ -15,7 +15,7 @@ import { getRandomBytesAsync } from "expo-crypto";
 import { useIsTablet, useIsLandscape } from "@/utils/responsive";
 import { Typography } from "@/constants/Typography";
 import { EmptyMainScreen } from "@/components/EmptyMainScreen";
-import { trackAccountCreated, trackAccountRestored } from '@/track';
+import { trackAccountCreated } from '@/track';
 import { FAB } from "@/components/FAB";
 import { HomeHeader, HomeHeaderNotAuth } from "@/components/HomeHeader";
 import { VoiceAssistantStatusBar } from '@/components/VoiceAssistantStatusBar';
@@ -141,47 +141,12 @@ function NotAuthenticated() {
             <Text style={styles.subtitle}>
                 {t('welcome.subtitle')}
             </Text>
-            {Platform.OS !== 'android' && Platform.OS !== 'ios' ? (
-                <>
-                    <View style={styles.buttonContainer}>
-                        <RoundButton
-                            title={t('welcome.loginWithMobileApp')}
-                            onPress={() => {
-                                trackAccountRestored();
-                                router.push('/restore');
-                            }}
-                        />
-                    </View>
-                    <View style={styles.buttonContainerSecondary}>
-                        <RoundButton
-                            size="normal"
-                            title={t('welcome.createAccount')}
-                            action={createAccount}
-                            display="inverted"
-                        />
-                    </View>
-                </>
-            ) : (
-                <>
                     <View style={styles.buttonContainer}>
                         <RoundButton
                             title={t('welcome.createAccount')}
                             action={createAccount}
                         />
                     </View>
-                    <View style={styles.buttonContainerSecondary}>
-                        <RoundButton
-                            size="normal"
-                            title={t('welcome.linkOrRestoreAccount')}
-                            onPress={() => {
-                                trackAccountRestored();
-                                router.push('/restore');
-                            }}
-                            display="inverted"
-                        />
-                    </View>
-                </>
-            )}
         </View>
     );
 
@@ -202,46 +167,12 @@ function NotAuthenticated() {
                     <Text style={styles.landscapeSubtitle}>
                         {t('welcome.subtitle')}
                     </Text>
-                    {Platform.OS !== 'android' && Platform.OS !== 'ios'
-                        ? (<>
-                            <View style={styles.landscapeButtonContainer}>
-                                <RoundButton
-                                    title={t('welcome.loginWithMobileApp')}
-                                    onPress={() => {
-                                        trackAccountRestored();
-                                        router.push('/restore');
-                                    }}
-                                />
-                            </View>
-                            <View style={styles.landscapeButtonContainerSecondary}>
-                                <RoundButton
-                                    size="normal"
-                                    title={t('welcome.createAccount')}
-                                    action={createAccount}
-                                    display="inverted"
-                                />
-                            </View>
-                        </>)
-                        : (<>
                             <View style={styles.landscapeButtonContainer}>
                                 <RoundButton
                                     title={t('welcome.createAccount')}
                                     action={createAccount}
                                 />
                             </View>
-                            <View style={styles.landscapeButtonContainerSecondary}>
-                                <RoundButton
-                                    size="normal"
-                                    title={t('welcome.linkOrRestoreAccount')}
-                                    onPress={() => {
-                                        trackAccountRestored();
-                                        router.push('/restore');
-                                    }}
-                                    display="inverted"
-                                />
-                            </View>
-                        </>)
-                    }
                 </View>
             </View>
         </View>

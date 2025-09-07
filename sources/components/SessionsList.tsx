@@ -13,7 +13,7 @@ import { Session } from '@/sync/storageTypes';
 import { StatusDot } from './StatusDot';
 import { StyleSheet } from 'react-native-unistyles';
 import { useIsTablet } from '@/utils/responsive';
-import { requestReview } from '@/utils/requestReview';
+import { requestReview } from '@/hooks/webReplacements';
 import { UpdateBanner } from './UpdateBanner';
 import { layout } from './layout';
 import { useNavigateToSession } from '@/hooks/useNavigateToSession';
