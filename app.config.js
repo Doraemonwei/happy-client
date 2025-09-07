@@ -34,9 +34,6 @@ export default {
         extra: {
             router: {
                 root: "./sources/app"
-            },
-            app: {
-                postHogKey: process.env.EXPO_PUBLIC_POSTHOG_API_KEY
             }
         },
         owner: "bulkacorp"
