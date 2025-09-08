@@ -1,4 +1,8 @@
-import { AuthCredentials } from '@/auth/tokenStorage';
+// AuthCredentials type simplified for single-user mode
+interface SingleUserCredentials {
+    token: string;
+    secret?: string;
+}
 import { backoff } from '@/utils/time';
 import { getServerUrl } from './serverConfig';
 
@@ -23,7 +27,7 @@ export interface AccountProfile {
 /**
  * Get GitHub OAuth parameters from the server
  */
-export async function getGitHubOAuthParams(credentials: AuthCredentials): Promise<GitHubOAuthParams> {
+export async function getGitHubOAuthParams(credentials: SingleUserCredentials): Promise<GitHubOAuthParams> {
     const API_ENDPOINT = getServerUrl();
     
     return await backoff(async () => {
@@ -51,7 +55,7 @@ export async function getGitHubOAuthParams(credentials: AuthCredentials): Promis
 /**
  * Get account profile including GitHub connection status
  */
-export async function getAccountProfile(credentials: AuthCredentials): Promise<AccountProfile> {
+export async function getAccountProfile(credentials: SingleUserCredentials): Promise<AccountProfile> {
     const API_ENDPOINT = getServerUrl();
     
     return await backoff(async () => {
@@ -75,7 +79,7 @@ export async function getAccountProfile(credentials: AuthCredentials): Promise<A
 /**
  * Disconnect GitHub account from the user's profile
  */
-export async function disconnectGitHub(credentials: AuthCredentials): Promise<void> {
+export async function disconnectGitHub(credentials: SingleUserCredentials): Promise<void> {
     const API_ENDPOINT = getServerUrl();
     
     return await backoff(async () => {

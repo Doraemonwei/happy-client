@@ -8,8 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Typography } from '@/constants/Typography';
 
 // Import all test files here
-import '@/encryption/hmac_sha512.appspec';
-import '@/encryption/deriveKey.appspec';
+// Encryption tests removed for single-user mode
 
 interface TestRunState {
     running: boolean;

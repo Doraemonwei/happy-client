@@ -205,10 +205,7 @@ class ApiSocket {
             this.updateStatus('error');
         });
 
-        // Authentication response
-        this.socket.on('auth', (data) => {
-            // console.log('🔌 SyncSocket: Auth response:', data);
-        });
+        // Single-user mode: no authentication needed
 
         // Message handling
         this.socket.onAny((event, data) => {

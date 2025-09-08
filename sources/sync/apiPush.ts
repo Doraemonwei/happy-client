@@ -1,8 +1,12 @@
-import { AuthCredentials } from '@/auth/tokenStorage';
+// AuthCredentials type simplified for single-user mode
+interface SingleUserCredentials {
+    token: string;
+    secret?: string;
+}
 import { backoff } from '@/utils/time';
 import { getServerUrl } from './serverConfig';
 
-export async function registerPushToken(credentials: AuthCredentials, token: string): Promise<void> {
+export async function registerPushToken(credentials: SingleUserCredentials, token: string): Promise<void> {
     const API_ENDPOINT = getServerUrl();
     await backoff(async () => {
         const response = await fetch(`${API_ENDPOINT}/v1/push-tokens`, {

@@ -1,7 +1,5 @@
 import Constants from 'expo-constants';
 import { apiSocket } from '@/sync/apiSocket';
-import { AuthCredentials } from '@/auth/tokenStorage';
-import { ApiEncryption } from '@/sync/apiEncryption';
 import { storage } from './storage';
 import { ApiEphemeralUpdateSchema, ApiMessage, ApiUpdateContainerSchema, ApiEphemeralActivityUpdateSchema } from './apiTypes';
 import type { ApiEphemeralUpdate, ApiEphemeralActivityUpdate } from './apiTypes';
@@ -14,13 +12,13 @@ import { registerPushToken } from './apiPush';
 import { Platform, AppState } from 'react-native';
 import { isRunningOnMac } from '@/utils/platform';
 import { NormalizedMessage, normalizeRawMessage, RawRecord } from './typesRaw';
-import { decodeBase64 } from '@/auth/base64';
 import { SessionEncryption } from './apiSessionEncryption';
+import { ApiEncryption } from './apiEncryption';
+import { AuthCredentials } from '@/auth/tokenStorage';
 import { applySettings, Settings, settingsDefaults, settingsParse } from './settings';
 import { Profile, profileParse } from './profile';
 import { loadPendingSettings, savePendingSettings } from './persistence';
 import { initializeTracking, tracking } from '@/track';
-import { parseToken } from '@/utils/parseToken';
 import { RevenueCat, LogLevel, PaywallResult } from './revenueCat';
 import { trackPaywallPresented, trackPaywallPurchased, trackPaywallCancelled, trackPaywallRestored, trackPaywallError } from '@/track';
 import { getServerUrl } from './serverConfig';
@@ -30,15 +28,19 @@ import { gitStatusSync } from './gitStatusSync';
 import { isMutableTool } from '@/components/tools/knownTools';
 import { voiceHooks } from '@/realtime/hooks/voiceHooks';
 import { Message } from './typesMessage';
-import { EncryptionCache } from './encryptionCache';
+
+// Single-user mode types
+interface SingleUserCredentials {
+    token: string;
+    secret?: string; // Optional in single-user mode
+}
 
 class Sync {
 
-    encryption!: ApiEncryption;
     serverID!: string;
     anonID!: string;
-    private credentials!: AuthCredentials;
-    public encryptionCache = new EncryptionCache();
+    encryption!: ApiEncryption; // Single-user mode encryption handler
+    private credentials!: SingleUserCredentials;
     private sessionsSync: InvalidateSync;
     private messagesSync = new Map<string, InvalidateSync>();
     private sessionEncryption = new Map<string, SessionEncryption>();
@@ -91,11 +93,11 @@ class Sync {
         });
     }
 
-    async create(credentials: AuthCredentials, encryption: ApiEncryption) {
+    async create(credentials: SingleUserCredentials) {
         this.credentials = credentials;
-        this.encryption = encryption;
-        this.anonID = encryption.anonID;
-        this.serverID = parseToken(credentials.token);
+        this.anonID = 'single-user-anon';
+        this.serverID = 'single-user';
+        this.encryption = await ApiEncryption.create('single-user-secret');
         await this.#init();
 
         // Await settings sync to have fresh settings
@@ -108,12 +110,11 @@ class Sync {
         await this.purchasesSync.awaitQueue();
     }
 
-    async restore(credentials: AuthCredentials, encryption: ApiEncryption) {
+    async restore(credentials: SingleUserCredentials) {
         // NOTE: No awaiting anything here, we're restoring from a disk (ie app restarted)
         this.credentials = credentials;
-        this.encryption = encryption;
-        this.anonID = encryption.anonID;
-        this.serverID = credentials.token === 'single-user-mode' ? 'single-user' : parseToken(credentials.token);
+        this.anonID = 'single-user-anon';
+        this.serverID = 'single-user';
         await this.#init();
     }
 
@@ -173,11 +174,12 @@ class Sync {
 
     sendMessage(sessionId: string, text: string) {
 
-        // Get encryption
+        // Get session encryption (simplified for single-user)
         const encryption = this.sessionEncryption.get(sessionId);
-        if (!encryption) { // Should never happen
-            console.error(`Session ${sessionId} not found`);
-            return;
+        if (!encryption) {
+            // Create a simple encryption handler for this session
+            const simpleEncryption = new SessionEncryption(sessionId);
+            this.sessionEncryption.set(sessionId, simpleEncryption);
         }
 
         // Get session data from storage
@@ -254,10 +256,8 @@ class Sync {
             }
         };
 
-        // In single-user mode, send plain text instead of encrypted
-        const messageContent = this.serverID === 'single-user' ? 
-            JSON.stringify(content) : 
-            encryption.encryptRawRecord(content);
+        // In single-user mode, always send plain JSON
+        const messageContent = JSON.stringify(content);
 
         // Add to messages immediately for UI responsiveness - normalize the raw record
         const createdAt = Date.now();
@@ -463,37 +463,46 @@ class Sync {
                 lastMessage: ApiMessage | null;
             }>;
 
-            // Decrypt sessions
-            let decryptedSessions: (Omit<Session, 'presence'> & { presence?: "online" | number })[] = [];
+            // Process sessions (no decryption needed in single-user mode)
+            let processedSessions: (Omit<Session, 'presence'> & { presence?: "online" | number })[] = [];
             for (const session of sessions) {
 
                 //
-                // Load decrypted metadata
+                // Parse metadata (plain JSON in single-user mode)
                 //
 
-                let metadata = this.encryption.decryptMetadata(session.id, session.metadataVersion, session.metadata);
-
-                //
-                // Create encryption
-                //
-
-                let encryption: SessionEncryption;
-                if (!this.sessionEncryption.has(session.id)) {
-                    if (metadata?.encryption) {
-                        encryption = new SessionEncryption(session.id, this.encryption.secretKey, { type: 'aes-gcm-256', key: decodeBase64(metadata.encryption.key) }, this.encryptionCache);
-                    } else {
-                        encryption = new SessionEncryption(session.id, this.encryption.secretKey, { type: 'libsodium' }, this.encryptionCache);
+                let metadata = null;
+                if (session.metadata) {
+                    try {
+                        metadata = JSON.parse(session.metadata);
+                    } catch (error) {
+                        console.error(`Failed to parse session metadata for ${session.id}:`, error);
+                        metadata = null;
                     }
-                    this.sessionEncryption.set(session.id, encryption);
-                } else {
-                    encryption = this.sessionEncryption.get(session.id)!;
                 }
 
                 //
-                // Decrypt agent state
+                // Create simple session encryption handler
                 //
 
-                let agentState = this.encryption.decryptAgentState(session.id, session.agentStateVersion, session.agentState);
+                if (!this.sessionEncryption.has(session.id)) {
+                    const encryption = new SessionEncryption(session.id);
+                    this.sessionEncryption.set(session.id, encryption);
+                }
+
+                //
+                // Parse agent state (plain JSON in single-user mode)
+                //
+
+                let agentState = null;
+                if (session.agentState) {
+                    try {
+                        agentState = JSON.parse(session.agentState);
+                    } catch (error) {
+                        console.error(`Failed to parse session agent state for ${session.id}:`, error);
+                        agentState = null;
+                    }
+                }
 
                 //
                 // Put it all together
@@ -506,12 +515,12 @@ class Sync {
                     metadata,
                     agentState
                 };
-                decryptedSessions.push(processedSession);
+                processedSessions.push(processedSession);
             }
 
             // Apply to storage
-            this.applySessions(decryptedSessions);
-            log.log(`📥 fetchSessions completed - processed ${decryptedSessions.length} sessions`);
+            this.applySessions(processedSessions);
+            log.log(`📥 fetchSessions completed - processed ${processedSessions.length} sessions`);
         } finally {
             unlock();
         }
@@ -562,15 +571,27 @@ class Sync {
         
         for (const machine of machines) {
             try {
-                // Decrypt metadata if present - decryptRaw already returns parsed JSON
-                const metadata = machine.metadata 
-                    ? this.encryption.decryptRaw(machine.metadata)
-                    : null;
+                // Parse metadata if present (plain JSON in single-user mode)
+                let metadata = null;
+                if (machine.metadata) {
+                    try {
+                        metadata = JSON.parse(machine.metadata);
+                    } catch (parseError) {
+                        console.error(`Failed to parse machine metadata for ${machine.id}:`, parseError);
+                        metadata = null;
+                    }
+                }
                 
-                // Decrypt daemonState if present
-                const daemonState = machine.daemonState 
-                    ? this.encryption.decryptRaw(machine.daemonState)
-                    : null;
+                // Parse daemonState if present (plain JSON in single-user mode)
+                let daemonState = null;
+                if (machine.daemonState) {
+                    try {
+                        daemonState = JSON.parse(machine.daemonState);
+                    } catch (parseError) {
+                        console.error(`Failed to parse machine daemon state for ${machine.id}:`, parseError);
+                        daemonState = null;
+                    }
+                }
 
                 decryptedMachines.push({
                     id: machine.id,
@@ -585,7 +606,7 @@ class Sync {
                     daemonStateVersion: machine.daemonStateVersion || 0
                 });
             } catch (error) {
-                console.error(`Failed to decrypt machine ${machine.id}:`, error);
+                console.error(`Failed to process machine ${machine.id}:`, error);
                 // Still add the machine with null metadata
                 decryptedMachines.push({
                     id: machine.id,
@@ -623,7 +644,7 @@ class Sync {
                 const response = await fetch(`${API_ENDPOINT}/v1/account/settings`, {
                     method: 'POST',
                     body: JSON.stringify({
-                        settings: this.encryption.encryptRaw(settings),
+                        settings: JSON.stringify(settings), // Plain JSON in single-user mode
                         expectedVersion: version ?? 0
                     }),
                     headers: {
@@ -645,7 +666,14 @@ class Sync {
                 if (data.error === 'version-mismatch') {
                     let parsedSettings: Settings;
                     if (data.currentSettings) {
-                        parsedSettings = settingsParse(this.encryption.decryptRaw(data.currentSettings));
+                        // Parse plain JSON in single-user mode
+                        try {
+                            const settingsData = JSON.parse(data.currentSettings);
+                            parsedSettings = settingsParse(settingsData);
+                        } catch (error) {
+                            console.error('Failed to parse settings JSON:', error);
+                            parsedSettings = { ...settingsDefaults };
+                        }
                     } else {
                         parsedSettings = { ...settingsDefaults };
                     }
@@ -696,7 +724,14 @@ class Sync {
         // Parse response
         let parsedSettings: Settings;
         if (data.settings) {
-            parsedSettings = settingsParse(this.encryption.decryptRaw(data.settings));
+            // Parse plain JSON in single-user mode
+            try {
+                const settingsData = JSON.parse(data.settings);
+                parsedSettings = settingsParse(settingsData);
+            } catch (error) {
+                console.error('Failed to parse settings JSON:', error);
+                parsedSettings = { ...settingsDefaults };
+            }
         } else {
             parsedSettings = { ...settingsDefaults };
         }
@@ -843,8 +878,8 @@ class Sync {
                 }
             }
         }
-        console.log('Decrypted and normalized messages in', Date.now() - start, 'ms');
-        console.log('Cache stats:', this.encryption.getCacheStats());
+        console.log('Processed and normalized messages in', Date.now() - start, 'ms');
+        console.log('Cache stats (single-user mode): No encryption cache');
         // console.log('messages', JSON.stringify(normalizedMessages));
 
             // Apply to storage
@@ -1029,17 +1064,35 @@ class Sync {
         } else if (updateData.body.t === 'update-session') {
             const session = storage.getState().sessions[updateData.body.id];
             if (session) {
+                // Parse agent state and metadata as plain JSON in single-user mode
+                let agentState = session.agentState;
+                let metadata = session.metadata;
+
+                if (updateData.body.agentState) {
+                    try {
+                        agentState = JSON.parse(updateData.body.agentState.value);
+                    } catch (error) {
+                        console.error('Failed to parse agent state:', error);
+                        agentState = session.agentState;
+                    }
+                }
+
+                if (updateData.body.metadata) {
+                    try {
+                        metadata = JSON.parse(updateData.body.metadata.value);
+                    } catch (error) {
+                        console.error('Failed to parse metadata:', error);
+                        metadata = session.metadata;
+                    }
+                }
+
                 this.applySessions([{
                     ...session,
-                    agentState: updateData.body.agentState
-                        ? this.encryption.decryptAgentState(updateData.body.id, updateData.body.agentState.version, updateData.body.agentState.value)
-                        : session.agentState,
+                    agentState,
                     agentStateVersion: updateData.body.agentState
                         ? updateData.body.agentState.version
                         : session.agentStateVersion,
-                    metadata: updateData.body.metadata
-                        ? this.encryption.decryptMetadata(updateData.body.id, updateData.body.metadata.version, updateData.body.metadata.value)
-                        : session.metadata,
+                    metadata,
                     metadataVersion: updateData.body.metadata
                         ? updateData.body.metadata.version
                         : session.metadataVersion,
@@ -1052,10 +1105,9 @@ class Sync {
                     gitStatusSync.invalidate(updateData.body.id);
 
                     // Check for new permission requests and notify voice assistant
-                    const newAgentState = this.encryption.decryptAgentState(updateData.body.id, updateData.body.agentState.version, updateData.body.agentState.value);
-                    if (newAgentState?.requests && Object.keys(newAgentState.requests).length > 0) {
-                        const requestIds = Object.keys(newAgentState.requests);
-                        const firstRequest = newAgentState.requests[requestIds[0]];
+                    if (agentState?.requests && Object.keys(agentState.requests).length > 0) {
+                        const requestIds = Object.keys(agentState.requests);
+                        const firstRequest = agentState.requests[requestIds[0]];
                         const toolName = firstRequest?.tool;
                         voiceHooks.onPermissionRequested(updateData.body.id, requestIds[0], toolName, firstRequest?.arguments);
                     }
@@ -1096,29 +1148,29 @@ class Sync {
                 daemonStateVersion: machine?.daemonStateVersion ?? 0
             };
             
-            // If metadata is provided, decrypt and update it
+            // If metadata is provided, parse and update it (plain JSON in single-user mode)
             const metadataUpdate = machineUpdate.metadata;
             if (metadataUpdate) {
                 try {
-                    // Decrypt metadata - decryptRaw already returns parsed JSON
-                    const metadata = this.encryption.decryptRaw(metadataUpdate.value);
+                    // Parse metadata as plain JSON
+                    const metadata = JSON.parse(metadataUpdate.value);
                     updatedMachine.metadata = metadata;
                     updatedMachine.metadataVersion = metadataUpdate.version;
                 } catch (error) {
-                    console.error(`Failed to decrypt machine metadata for ${machineId}:`, error);
+                    console.error(`Failed to parse machine metadata for ${machineId}:`, error);
                 }
             }
             
-            // If daemonState is provided, decrypt and update it
+            // If daemonState is provided, parse and update it (plain JSON in single-user mode)
             const daemonStateUpdate = machineUpdate.daemonState;
             if (daemonStateUpdate) {
                 try {
-                    // Decrypt daemonState - decryptRaw already returns parsed JSON
-                    const daemonState = this.encryption.decryptRaw(daemonStateUpdate.value);
+                    // Parse daemonState as plain JSON
+                    const daemonState = JSON.parse(daemonStateUpdate.value);
                     updatedMachine.daemonState = daemonState;
                     updatedMachine.daemonStateVersion = daemonStateUpdate.version;
                 } catch (error) {
-                    console.error(`Failed to decrypt machine daemonState for ${machineId}:`, error);
+                    console.error(`Failed to parse machine daemonState for ${machineId}:`, error);
                 }
             }
             
@@ -1237,24 +1289,26 @@ class Sync {
     }
 
     /**
-     * Clear cache for a specific session (useful when session is deleted)
+     * Clear cache for a specific session (simplified for single-user mode)
      */
     clearSessionCache(sessionId: string): void {
-        this.encryption.clearSessionCache(sessionId);
+        // No encryption cache to clear in single-user mode
+        console.log(`Clearing cache for session ${sessionId} (no-op in single-user mode)`);
     }
 
     /**
-     * Clear all cached data (useful on logout)
+     * Clear all cached data (simplified for single-user mode)
      */
     clearAllCache(): void {
-        this.encryption.clearAllCache();
+        // No encryption cache to clear in single-user mode
+        console.log('Clearing all cache (no-op in single-user mode)');
     }
 
     /**
-     * Get cache statistics for debugging performance
+     * Get cache statistics for debugging performance (simplified for single-user mode)
      */
     getCacheStats() {
-        return this.encryption.getCacheStats();
+        return { sessions: 0, messages: 0, keys: 0 }; // No encryption cache in single-user mode
     }
 }
 
@@ -1266,7 +1320,7 @@ export const sync = new Sync();
 //
 
 let isInitialized = false;
-export async function syncCreate(credentials: AuthCredentials) {
+export async function syncCreate(credentials: SingleUserCredentials) {
     if (isInitialized) {
         console.warn('Sync already initialized: ignoring');
         return;
@@ -1275,7 +1329,7 @@ export async function syncCreate(credentials: AuthCredentials) {
     await syncInit(credentials, false);
 }
 
-export async function syncRestore(credentials: AuthCredentials) {
+export async function syncRestore(credentials: SingleUserCredentials) {
     if (isInitialized) {
         console.warn('Sync already initialized: ignoring');
         return;
@@ -1284,13 +1338,10 @@ export async function syncRestore(credentials: AuthCredentials) {
     await syncInit(credentials, true);
 }
 
-async function syncInit(credentials: AuthCredentials, restore: boolean) {
+async function syncInit(credentials: SingleUserCredentials, restore: boolean) {
 
-    // Initialize sync engine
-    const encryption = await ApiEncryption.create(credentials.secret, sync.encryptionCache);
-
-    // Initialize tracking
-    initializeTracking(encryption.anonID);
+    // Initialize tracking with single-user anonymous ID
+    initializeTracking('single-user-anon');
 
     // Initialize socket connection
     const API_ENDPOINT = getServerUrl();
@@ -1303,8 +1354,8 @@ async function syncInit(credentials: AuthCredentials, restore: boolean) {
 
     // Initialize sessions engine
     if (restore) {
-        await sync.restore(credentials, encryption);
+        await sync.restore(credentials);
     } else {
-        await sync.create(credentials, encryption);
+        await sync.create(credentials);
     }
 }

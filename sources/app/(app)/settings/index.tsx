@@ -5,7 +5,7 @@ import { Text } from '@/components/StyledText';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
-import { useAuth } from '@/auth/AuthContext';
+// Auth context removed for single-user mode
 import { Typography } from "@/constants/Typography";
 import { Item } from '@/components/Item';
 import { ItemGroup } from '@/components/ItemGroup';
@@ -89,7 +89,7 @@ export default React.memo(function SettingsScreen() {
     const { theme } = useUnistyles();
     const router = useRouter();
     const appVersion = Constants.expoConfig?.version || '1.0.0';
-    const auth = useAuth();
+    // Auth removed for single-user mode - no login/logout functionality
     const [devModeEnabled, setDevModeEnabled] = useLocalSettingMutable('devModeEnabled');
     const isPro = __DEV__ || useEntitlement('pro');
     const isCustomServer = isUsingCustomServer();
@@ -144,9 +144,12 @@ export default React.memo(function SettingsScreen() {
     // GitHub connection status
     const isGitHubConnected = !!profile.github;
 
+    // Single-user mode credentials
+    const singleUserCredentials = { token: 'single-user-mode', secret: undefined };
+
     // GitHub connection
     const [connecting, connectGitHub] = useHappyAction(async () => {
-        const params = await getGitHubOAuthParams(auth.credentials!);
+        const params = await getGitHubOAuthParams(singleUserCredentials);
         await Linking.openURL(params.url);
     });
 
@@ -158,7 +161,7 @@ export default React.memo(function SettingsScreen() {
             { confirmText: t('modals.disconnect'), destructive: true }
         );
         if (confirmed) {
-            await disconnectGitHub(auth.credentials!);
+            await disconnectGitHub(singleUserCredentials);
         }
     });
 

@@ -23,7 +23,7 @@ import { StatusBarProvider } from '@/components/StatusBarProvider';
 // import * as SystemUI from 'expo-system-ui';
 import { monkeyPatchConsoleForRemoteLoggingForFasterAiAutoDebuggingOnlyInLocalBuilds } from '@/utils/remoteLogger';
 import { useUnistyles } from 'react-native-unistyles';
-import { AuthProvider } from '@/auth/AuthContext';
+// AuthProvider removed for single-user mode
 
 export {
     // Catch any errors thrown by the Layout component.
@@ -121,14 +121,14 @@ export default function RootLayout() {
                 }
                 await sodium.ready;
                 
-                // Single-user mode: initialize sync with fixed credentials
-                console.log('Single-user mode: initializing sync with fixed credentials');
-                const credentials = { 
-                    token: 'single-user-mode', 
-                    secret: 'single-user-mode' 
-                };
+                // Single-user mode: initialize sync without authentication
+                console.log('Single-user mode: initializing sync');
                 try {
-                    await syncRestore(credentials);
+                    const singleUserCredentials = {
+                        token: 'single-user-mode',
+                        secret: 'single-user-mode'
+                    };
+                    await syncRestore(singleUserCredentials);
                     console.log('Single-user mode: sync initialized successfully');
                 } catch (error) {
                     console.error('Single-user mode: sync initialization failed:', error);
@@ -171,17 +171,15 @@ export default function RootLayout() {
                 <GestureHandlerRootView style={{ flex: 1 }}>
                     <ThemeProvider value={navigationTheme}>
                         <StatusBarProvider />
-                        <AuthProvider>
-                            <ModalProvider>
-                                <CommandPaletteProvider>
-                                    <RealtimeProvider>
-                                        <HorizontalSafeAreaWrapper>
-                                            <SidebarNavigator />
-                                        </HorizontalSafeAreaWrapper>
-                                    </RealtimeProvider>
-                                </CommandPaletteProvider>
-                            </ModalProvider>
-                        </AuthProvider>
+                        <ModalProvider>
+                            <CommandPaletteProvider>
+                                <RealtimeProvider>
+                                    <HorizontalSafeAreaWrapper>
+                                        <SidebarNavigator />
+                                    </HorizontalSafeAreaWrapper>
+                                </RealtimeProvider>
+                            </CommandPaletteProvider>
+                        </ModalProvider>
                     </ThemeProvider>
                 </GestureHandlerRootView>
             </KeyboardProvider>

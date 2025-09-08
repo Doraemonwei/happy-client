@@ -5,14 +5,14 @@ import { Modal } from '@/modal';
 import { CommandPalette } from './CommandPalette';
 import { Command } from './types';
 import { useGlobalKeyboard } from '@/hooks/useGlobalKeyboard.web';
-import { useAuth } from '@/auth/AuthContext';
+// Auth context removed for single-user mode
 import { storage } from '@/sync/storage';
 import { useShallow } from 'zustand/react/shallow';
 import { useNavigateToSession } from '@/hooks/useNavigateToSession';
 
 export function CommandPaletteProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter();
-    const { logout } = useAuth();
+    // Logout not applicable in single-user mode
     const sessions = storage(useShallow((state) => state.sessions));
     const commandPaletteEnabled = storage(useShallow((state) => state.localSettings.commandPaletteEnabled));
     const navigateToSession = useNavigateToSession();
@@ -94,17 +94,7 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
             });
         });
 
-        // System commands
-        cmds.push({
-            id: 'sign-out',
-            title: 'Sign Out',
-            subtitle: 'Sign out of your account',
-            icon: 'log-out-outline',
-            category: 'System',
-            action: async () => {
-                await logout();
-            }
-        });
+        // System commands (sign out removed for single-user mode)
 
         // Dev commands (if in development)
         if (__DEV__) {
@@ -121,7 +111,7 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
         }
 
         return cmds;
-    }, [router, logout, sessions]);
+    }, [router, sessions]); // logout dependency removed
 
     const showCommandPalette = useCallback(() => {
         if (Platform.OS !== 'web' || !commandPaletteEnabled) return;
