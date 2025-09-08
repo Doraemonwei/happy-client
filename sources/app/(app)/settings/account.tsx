@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '@/auth/AuthContext';
+// Auth imports removed for single-user mode
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { Typography } from '@/constants/Typography';
-import { formatSecretKeyForBackup } from '@/auth/secretKeyBackup';
 import { Item } from '@/components/Item';
 import { ItemGroup } from '@/components/ItemGroup';
 import { ItemList } from '@/components/ItemList';
@@ -25,17 +24,19 @@ import { disconnectGitHub } from '@/sync/apiGithub';
 
 export default React.memo(() => {
     const { theme } = useUnistyles();
-    const auth = useAuth();
+    // Auth removed for single-user mode
     const router = useRouter();
     const [showSecret, setShowSecret] = useState(false);
     const [copiedRecently, setCopiedRecently] = useState(false);
+    
+    // Single-user mode: use fixed secret
+    const formattedSecret = 'single-user-mode-secret';
     const [analyticsOptOut, setAnalyticsOptOut] = useSettingMutable('analyticsOptOut');
     const { connectAccount, isLoading: isConnecting } = useConnectAccount();
     const profile = useProfile();
 
-    // Get the current secret key
-    const currentSecret = auth.credentials?.secret || '';
-    const formattedSecret = currentSecret ? formatSecretKeyForBackup(currentSecret) : '';
+    // Single-user mode - no secret key backup needed
+    const singleUserCredentials = { token: 'single-user-mode', secret: undefined };
 
     // Get server info
     const serverInfo = getServerInfo();
@@ -52,7 +53,7 @@ export default React.memo(() => {
             { confirmText: t('modals.disconnect'), destructive: true }
         );
         if (confirmed) {
-            await disconnectGitHub(auth.credentials!);
+            await disconnectGitHub(singleUserCredentials);
         }
     });
 
@@ -78,7 +79,8 @@ export default React.memo(() => {
             { confirmText: t('common.logout'), destructive: true }
         );
         if (confirmed) {
-            auth.logout();
+            // In single-user mode, logout is not applicable
+            console.log('Logout not applicable in single-user mode');
         }
     };
 
@@ -89,7 +91,7 @@ export default React.memo(() => {
                 <ItemGroup title={t('settingsAccount.accountInformation')}>
                     <Item
                         title={t('settingsAccount.status')}
-                        detail={auth.isAuthenticated ? t('settingsAccount.statusActive') : t('settingsAccount.statusNotAuthenticated')}
+                        detail={t('settingsAccount.statusActive')} // Always active in single-user mode
                         showChevron={false}
                     />
                     <Item

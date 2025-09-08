@@ -1,16 +1,5 @@
-// Single-user mode: simplified auth approval
-
-export interface AuthApprovalRequest {
-    publicKey: string;
-    challenge: string;
-}
-
-export interface AuthApprovalResponse {
-    success: boolean;
-    token?: string;
-    message?: string;
-}
-
-export async function authApprove(token: string, publicKey: Uint8Array, response: Uint8Array): Promise<void> {
-    // Single-user mode: always approve, no-op
+// Single-user mode: simplified auth approve stub
+export function authApprove(): Promise<{ success: boolean }> {
+  // Single-user mode: always succeed
+  return Promise.resolve({ success: true });
 }

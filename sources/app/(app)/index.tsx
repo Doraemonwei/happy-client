@@ -1,35 +1,34 @@
-import { RoundButton } from "@/components/RoundButton";
-import { useAuth } from "@/auth/AuthContext";
-import { ActivityIndicator, Text, View, Image } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ActivityIndicator, View } from "react-native";
 import * as React from 'react';
-import { encodeBase64 } from "@/auth/base64";
-import { authGetToken } from "@/auth/authGetToken";
-import { useUpdates } from "@/hooks/webReplacements";
 import { UpdateBanner } from "@/components/UpdateBanner";
 import { SessionsList } from "@/components/SessionsList";
-import { router, Stack, useRouter } from "expo-router";
-import { useSessionListViewData, useEntitlement, useSocketStatus, useSetting } from "@/sync/storage";
+import { router } from "expo-router";
+import { useSessionListViewData, useSetting } from "@/sync/storage";
 import { StyleSheet, useUnistyles } from "react-native-unistyles";
-import { getRandomBytesAsync } from "expo-crypto";
-import { useIsTablet, useIsLandscape } from "@/utils/responsive";
-import { Typography } from "@/constants/Typography";
+import { useIsTablet } from "@/utils/responsive";
 import { EmptyMainScreen } from "@/components/EmptyMainScreen";
-import { trackAccountCreated } from '@/track';
 import { FAB } from "@/components/FAB";
-import { HomeHeader, HomeHeaderNotAuth } from "@/components/HomeHeader";
+import { HomeHeader } from "@/components/HomeHeader";
 import { VoiceAssistantStatusBar } from '@/components/VoiceAssistantStatusBar';
 import { useRealtimeStatus } from '@/sync/storage';
-import { t } from '@/text';
+
+// Simple hook to simulate auth state in single-user mode
+function useSingleUserAuth() {
+    const [isAuthenticated, setIsAuthenticated] = React.useState(true); // Always authenticated in single-user mode
+    
+    // Initialize sync if needed
+    React.useEffect(() => {
+        // Initialize single-user mode sync here if needed
+        // For now, we assume sync is already initialized
+    }, []);
+    
+    return { isAuthenticated };
+}
 
 export default function Home() {
-    const auth = useAuth();
-    if (!auth.isAuthenticated) {
-        return <NotAuthenticated />;
-    }
-    return (
-        <Authenticated />
-    )
+    const auth = useSingleUserAuth();
+    // In single-user mode, we're always authenticated, so just render the main interface
+    return <Authenticated />;
 }
 
 function Authenticated() {
@@ -108,83 +107,7 @@ function Authenticated() {
     );
 }
 
-function NotAuthenticated() {
-    const { theme } = useUnistyles();
-    const auth = useAuth();
-    const router = useRouter();
-    const isLandscape = useIsLandscape();
-    const insets = useSafeAreaInsets();
-
-    const createAccount = async () => {
-        try {
-            const secret = await getRandomBytesAsync(32);
-            const token = await authGetToken(secret);
-            if (token && secret) {
-                await auth.login(token, encodeBase64(secret, 'base64url'));
-                trackAccountCreated();
-            }
-        } catch (error) {
-            console.error('Error creating account', error);
-        }
-    }
-
-    const portraitLayout = (
-        <View style={styles.portraitContainer}>
-            <Image
-                source={theme.dark ? require('@/assets/images/logotype-light.png') : require('@/assets/images/logotype-dark.png')}
-                resizeMode="contain"
-                style={styles.logo}
-            />
-            <Text style={styles.title}>
-                {t('welcome.title')}
-            </Text>
-            <Text style={styles.subtitle}>
-                {t('welcome.subtitle')}
-            </Text>
-                    <View style={styles.buttonContainer}>
-                        <RoundButton
-                            title={t('welcome.createAccount')}
-                            action={createAccount}
-                        />
-                    </View>
-        </View>
-    );
-
-    const landscapeLayout = (
-        <View style={[styles.landscapeContainer, { paddingBottom: insets.bottom + 24 }]}>
-            <View style={styles.landscapeInner}>
-                <View style={styles.landscapeLogoSection}>
-                    <Image
-                        source={theme.dark ? require('@/assets/images/logotype-light.png') : require('@/assets/images/logotype-dark.png')}
-                        resizeMode="contain"
-                        style={styles.logo}
-                    />
-                </View>
-                <View style={styles.landscapeContentSection}>
-                    <Text style={styles.landscapeTitle}>
-                        {t('welcome.title')}
-                    </Text>
-                    <Text style={styles.landscapeSubtitle}>
-                        {t('welcome.subtitle')}
-                    </Text>
-                            <View style={styles.landscapeButtonContainer}>
-                                <RoundButton
-                                    title={t('welcome.createAccount')}
-                                    action={createAccount}
-                                />
-                            </View>
-                </View>
-            </View>
-        </View>
-    );
-
-    return (
-        <>
-            <HomeHeaderNotAuth />
-            {isLandscape ? landscapeLayout : portraitLayout}
-        </>
-    )
-}
+// NotAuthenticated component removed - not needed in single-user mode
 
 const styles = StyleSheet.create((theme) => ({
     container: {
@@ -201,89 +124,5 @@ const styles = StyleSheet.create((theme) => ({
         alignItems: 'center',
         justifyContent: 'center',
         paddingBottom: 32,
-    },
-    // NotAuthenticated styles
-    portraitContainer: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    logo: {
-        width: 300,
-        height: 90,
-    },
-    title: {
-        marginTop: 16,
-        textAlign: 'center',
-        fontSize: 24,
-        ...Typography.default('semiBold'),
-        color: theme.colors.text,
-    },
-    subtitle: {
-        ...Typography.default(),
-        fontSize: 18,
-        color: theme.colors.textSecondary,
-        marginTop: 16,
-        textAlign: 'center',
-        marginHorizontal: 24,
-        marginBottom: 64,
-    },
-    buttonContainer: {
-        maxWidth: 280,
-        width: '100%',
-        marginBottom: 16,
-    },
-    buttonContainerSecondary: {
-    },
-    // Landscape styles
-    landscapeContainer: {
-        flexBasis: 0,
-        flexGrow: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: 48,
-    },
-    landscapeInner: {
-        flexGrow: 1,
-        flexBasis: 0,
-        maxWidth: 800,
-        flexDirection: 'row',
-    },
-    landscapeLogoSection: {
-        flexBasis: 0,
-        flexGrow: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingRight: 24,
-    },
-    landscapeContentSection: {
-        flexBasis: 0,
-        flexGrow: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingLeft: 24,
-    },
-    landscapeTitle: {
-        textAlign: 'center',
-        fontSize: 24,
-        ...Typography.default('semiBold'),
-        color: theme.colors.text,
-    },
-    landscapeSubtitle: {
-        ...Typography.default(),
-        fontSize: 18,
-        color: theme.colors.textSecondary,
-        marginTop: 16,
-        textAlign: 'center',
-        marginBottom: 32,
-        paddingHorizontal: 16,
-    },
-    landscapeButtonContainer: {
-        width: 280,
-        marginBottom: 16,
-    },
-    landscapeButtonContainerSecondary: {
-        width: 280,
     },
 }));
