@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { disconnectGitHub } from './apiGithub';
-import { AuthCredentials } from '@/auth/tokenStorage';
+// AuthCredentials type simplified for single-user mode
+interface SingleUserCredentials {
+    token: string;
+    secret?: string;
+}
 
 // Mock the serverConfig
 vi.mock('./serverConfig', () => ({
@@ -13,7 +17,7 @@ vi.mock('@/utils/time', () => ({
 }));
 
 describe('apiGithub', () => {
-    const mockCredentials: AuthCredentials = {
+    const mockCredentials: SingleUserCredentials = {
         token: 'test-token',
         secret: 'test-secret'
     };

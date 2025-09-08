@@ -1,11 +1,15 @@
-export function encodeUTF8(value: string) {
-    return new TextEncoder().encode(value);
+// Single-user mode: simplified text encryption stub
+export function parseToken(token: string): { userId: string } | null {
+  // Single-user mode: always return default user
+  return { userId: 'default-user' };
 }
 
-export function decodeUTF8(value: Uint8Array) {
-    return new TextDecoder().decode(value);
+export function encryptText(text: string): string {
+  // Single-user mode: return text as-is
+  return text;
 }
 
-export function normalizeNFKD(value: string) {
-    return value.normalize('NFKD');
+export function decryptText(encryptedText: string): string {
+  // Single-user mode: return text as-is
+  return encryptedText;
 }
