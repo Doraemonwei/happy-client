@@ -22,7 +22,6 @@ import { isMachineOnline } from '@/utils/machineUtils';
 import { useUnistyles } from 'react-native-unistyles';
 import { layout } from '@/components/layout';
 import { useHappyAction } from '@/hooks/useHappyAction';
-import { getGitHubOAuthParams, disconnectGitHub } from '@/sync/apiGithub';
 import { useProfile } from '@/sync/storage';
 import { getDisplayName, getAvatarUrl, getBio } from '@/sync/profile';
 import { Avatar } from '@/components/Avatar';
@@ -141,29 +140,6 @@ export default React.memo(function SettingsScreen() {
         resetTimeout: 2000
     });
 
-    // GitHub connection status
-    const isGitHubConnected = !!profile.github;
-
-    // Single-user mode credentials
-    const singleUserCredentials = { token: 'single-user-mode', secret: undefined };
-
-    // GitHub connection
-    const [connecting, connectGitHub] = useHappyAction(async () => {
-        const params = await getGitHubOAuthParams(singleUserCredentials);
-        await Linking.openURL(params.url);
-    });
-
-    // GitHub disconnection
-    const [disconnecting, handleDisconnectGitHub] = useHappyAction(async () => {
-        const confirmed = await Modal.confirm(
-            t('modals.disconnectGithub'),
-            t('modals.disconnectGithubConfirm'),
-            { confirmText: t('modals.disconnect'), destructive: true }
-        );
-        if (confirmed) {
-            await disconnectGitHub(singleUserCredentials);
-        }
-    });
 
 
     return (
@@ -272,25 +248,6 @@ export default React.memo(function SettingsScreen() {
                 />
             </ItemGroup>
 
-            <ItemGroup title={t('settings.connectedAccounts')}>
-                <Item
-                    title={t('settings.github')}
-                    subtitle={isGitHubConnected 
-                        ? t('settings.githubConnected', { login: profile.github?.login! }) 
-                        : t('settings.connectGithubAccount')
-                    }
-                    icon={
-                        <Ionicons
-                            name="logo-github"
-                            size={29}
-                            color={isGitHubConnected ? theme.colors.status.connected : theme.colors.textSecondary}
-                        />
-                    }
-                    onPress={isGitHubConnected ? handleDisconnectGitHub : connectGitHub}
-                    loading={connecting || disconnecting}
-                    showChevron={false}
-                />
-            </ItemGroup>
 
             {/* Machines */}
             {allMachines.length > 0 && (

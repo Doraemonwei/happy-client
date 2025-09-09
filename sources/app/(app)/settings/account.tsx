@@ -20,7 +20,6 @@ import { useConnectAccount } from '@/hooks/useConnectAccount';
 import { getDisplayName, getAvatarUrl } from '@/sync/profile';
 import { Image } from 'expo-image';
 import { useHappyAction } from '@/hooks/useHappyAction';
-import { disconnectGitHub } from '@/sync/apiGithub';
 
 export default React.memo(() => {
     const { theme } = useUnistyles();
@@ -43,19 +42,6 @@ export default React.memo(() => {
 
     // Profile display values
     const displayName = getDisplayName(profile);
-    const githubUsername = profile.github?.login;
-
-    // GitHub disconnection
-    const [disconnecting, handleDisconnectGitHub] = useHappyAction(async () => {
-        const confirmed = await Modal.confirm(
-            t('modals.disconnectGithub'),
-            t('modals.disconnectGithubConfirm'),
-            { confirmText: t('modals.disconnect'), destructive: true }
-        );
-        if (confirmed) {
-            await disconnectGitHub(singleUserCredentials);
-        }
-    });
 
     const handleShowSecret = () => {
         setShowSecret(!showSecret);
@@ -119,35 +105,13 @@ export default React.memo(() => {
                 </ItemGroup>
 
                 {/* Profile Section */}
-                {(displayName || githubUsername || profile.avatar) && (
+                {(displayName || profile.avatar) && (
                     <ItemGroup title={t('settingsAccount.profile')}>
                         {displayName && (
                             <Item
                                 title={t('settingsAccount.name')}
                                 detail={displayName}
                                 showChevron={false}
-                            />
-                        )}
-                        {githubUsername && (
-                            <Item
-                                title={t('settingsAccount.github')}
-                                detail={`@${githubUsername}`}
-                                subtitle={t('settingsAccount.tapToDisconnect')}
-                                onPress={handleDisconnectGitHub}
-                                loading={disconnecting}
-                                showChevron={false}
-                                icon={profile.avatar?.url ? (
-                                    <Image
-                                        source={{ uri: profile.avatar.url }}
-                                        style={{ width: 29, height: 29, borderRadius: 14.5 }}
-                                        placeholder={{ thumbhash: profile.avatar.thumbhash }}
-                                        contentFit="cover"
-                                        transition={200}
-                                        cachePolicy="memory-disk"
-                                    />
-                                ) : (
-                                    <Ionicons name="logo-github" size={29} color={theme.colors.textSecondary} />
-                                )}
                             />
                         )}
                     </ItemGroup>

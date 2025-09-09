@@ -68,7 +68,6 @@ export const ca: TranslationStructure = {
 
     settings: {
         title: 'Configuració',
-        connectedAccounts: 'Comptes connectats',
         github: 'GitHub',
         machines: 'Màquines',
         features: 'Funcions',
@@ -94,8 +93,6 @@ export const ca: TranslationStructure = {
         supportUsSubtitlePro: 'Gràcies pel teu suport!',
         supportUsSubtitle: 'Dona suport al desenvolupament del projecte',
         scanQrCodeToAuthenticate: 'Escaneja el codi QR per autenticar-te',
-        githubConnected: ({ login }: { login: string }) => `Connectat com a @${login}`,
-        connectGithubAccount: 'Connecta el teu compte de GitHub',
 
         // Dynamic settings messages
         accountConnected: ({ service }: { service: string }) => `Compte de ${service} connectat`,
@@ -427,8 +424,6 @@ export const ca: TranslationStructure = {
         linkNewDeviceSubtitle: 'Escaneja el codi QR per enllaçar el dispositiu',
         profile: 'Perfil',
         name: 'Nom',
-        github: 'GitHub',
-        tapToDisconnect: 'Toca per desconnectar',
         server: 'Servidor',
         backup: 'Còpia de seguretat',
         backupDescription: 'La teva clau secreta és l\'única manera de recuperar el teu compte. Desa-la en un lloc segur com un gestor de contrasenyes.',
@@ -514,8 +509,6 @@ export const ca: TranslationStructure = {
         developerMode: 'Mode desenvolupador',
         developerModeEnabled: 'Mode desenvolupador activat',
         developerModeDisabled: 'Mode desenvolupador desactivat',
-        disconnectGithub: 'Desconnecta GitHub',
-        disconnectGithubConfirm: 'Segur que vols desconnectar el teu compte de GitHub?',
         disconnect: 'Desconnecta',
         failedToConnectTerminal: 'Ha fallat connectar el terminal',
         cameraPermissionsRequiredToConnectTerminal: 'Es requereixen permisos de càmera per connectar el terminal',

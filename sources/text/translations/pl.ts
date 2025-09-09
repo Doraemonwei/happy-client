@@ -79,7 +79,6 @@ export const pl: TranslationStructure = {
 
     settings: {
         title: 'Ustawienia',
-        connectedAccounts: 'Połączone konta',
         github: 'GitHub',
         machines: 'Maszyny',
         features: 'Funkcje',
@@ -105,8 +104,6 @@ export const pl: TranslationStructure = {
         supportUsSubtitlePro: 'Dziękujemy za wsparcie!',
         supportUsSubtitle: 'Wesprzyj rozwój projektu',
         scanQrCodeToAuthenticate: 'Zeskanuj kod QR, aby się uwierzytelnić',
-        githubConnected: ({ login }: { login: string }) => `Połączono jako @${login}`,
-        connectGithubAccount: 'Połącz konto GitHub',
 
         // Dynamic settings messages
         accountConnected: ({ service }: { service: string }) => `Konto ${service} połączone`,
@@ -437,8 +434,6 @@ export const pl: TranslationStructure = {
         linkNewDeviceSubtitle: 'Zeskanuj kod QR, aby połączyć urządzenie',
         profile: 'Profil',
         name: 'Nazwa',
-        github: 'GitHub',
-        tapToDisconnect: 'Dotknij, aby rozłączyć',
         server: 'Serwer',
         backup: 'Kopia zapasowa',
         backupDescription: 'Twój klucz tajny to jedyny sposób na odzyskanie konta. Zapisz go w bezpiecznym miejscu, takim jak menedżer haseł.',
@@ -524,8 +519,6 @@ export const pl: TranslationStructure = {
         developerMode: 'Tryb deweloperski',
         developerModeEnabled: 'Tryb deweloperski włączony',
         developerModeDisabled: 'Tryb deweloperski wyłączony',
-        disconnectGithub: 'Rozłącz GitHub',
-        disconnectGithubConfirm: 'Czy na pewno chcesz rozłączyć swoje konto GitHub?',
         disconnect: 'Rozłącz',
         failedToConnectTerminal: 'Nie udało się połączyć terminala',
         cameraPermissionsRequiredToConnectTerminal: 'Uprawnienia do kamery są wymagane do połączenia terminala',

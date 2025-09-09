@@ -68,7 +68,6 @@ export const en = {
 
     settings: {
         title: 'Settings',
-        connectedAccounts: 'Connected Accounts',
         github: 'GitHub',
         machines: 'Machines',
         features: 'Features',
@@ -94,8 +93,6 @@ export const en = {
         supportUsSubtitlePro: 'Thank you for your support!',
         supportUsSubtitle: 'Support project development',
         scanQrCodeToAuthenticate: 'Scan QR code to authenticate',
-        githubConnected: ({ login }: { login: string }) => `Connected as @${login}`,
-        connectGithubAccount: 'Connect your GitHub account',
 
         // Dynamic settings messages
         accountConnected: ({ service }: { service: string }) => `${service} account connected`,
@@ -427,8 +424,6 @@ export const en = {
         linkNewDeviceSubtitle: 'Scan QR code to link device',
         profile: 'Profile',
         name: 'Name',
-        github: 'GitHub',
-        tapToDisconnect: 'Tap to disconnect',
         server: 'Server',
         backup: 'Backup',
         backupDescription: 'Your secret key is the only way to recover your account. Save it in a secure place like a password manager.',
@@ -514,8 +509,6 @@ export const en = {
         developerMode: 'Developer Mode',
         developerModeEnabled: 'Developer mode enabled',
         developerModeDisabled: 'Developer mode disabled',
-        disconnectGithub: 'Disconnect GitHub',
-        disconnectGithubConfirm: 'Are you sure you want to disconnect your GitHub account?',
         disconnect: 'Disconnect',
         failedToConnectTerminal: 'Failed to connect terminal',
         cameraPermissionsRequiredToConnectTerminal: 'Camera permissions are required to connect terminal',

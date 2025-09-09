@@ -68,7 +68,6 @@ export const pt: TranslationStructure = {
 
     settings: {
         title: 'Configurações',
-        connectedAccounts: 'Contas conectadas',
         github: 'GitHub',
         machines: 'Máquinas',
         features: 'Recursos',
@@ -94,8 +93,6 @@ export const pt: TranslationStructure = {
         supportUsSubtitlePro: 'Obrigado pelo seu apoio!',
         supportUsSubtitle: 'Apoie o desenvolvimento do projeto',
         scanQrCodeToAuthenticate: 'Escaneie o código QR para autenticar',
-        githubConnected: ({ login }: { login: string }) => `Conectado como @${login}`,
-        connectGithubAccount: 'Conecte sua conta GitHub',
 
         // Dynamic settings messages
         accountConnected: ({ service }: { service: string }) => `Conta ${service} conectada`,
@@ -427,8 +424,6 @@ export const pt: TranslationStructure = {
         linkNewDeviceSubtitle: 'Escanear código QR para vincular dispositivo',
         profile: 'Perfil',
         name: 'Nome',
-        github: 'GitHub',
-        tapToDisconnect: 'Toque para desconectar',
         server: 'Servidor',
         backup: 'Backup',
         backupDescription: 'Sua chave secreta é a única forma de recuperar sua conta. Salve-a em um local seguro como um gerenciador de senhas.',
@@ -514,8 +509,6 @@ export const pt: TranslationStructure = {
         developerMode: 'Modo desenvolvedor',
         developerModeEnabled: 'Modo desenvolvedor ativado',
         developerModeDisabled: 'Modo desenvolvedor desativado',
-        disconnectGithub: 'Desconectar GitHub',
-        disconnectGithubConfirm: 'Tem certeza de que deseja desconectar sua conta GitHub?',
         disconnect: 'Desconectar',
         failedToConnectTerminal: 'Falha ao conectar terminal',
         cameraPermissionsRequiredToConnectTerminal: 'Permissões de câmera são necessárias para conectar terminal',

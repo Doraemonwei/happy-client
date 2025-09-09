@@ -60,7 +60,6 @@ export const ru: TranslationStructure = {
 
     settings: {
         title: 'Настройки',
-        connectedAccounts: 'Подключенные аккаунты',
         github: 'GitHub',
         machines: 'Машины',
         features: 'Функции',
@@ -86,8 +85,6 @@ export const ru: TranslationStructure = {
         supportUsSubtitlePro: 'Спасибо за вашу поддержку!',
         supportUsSubtitle: 'Поддержать разработку проекта',
         scanQrCodeToAuthenticate: 'Отсканируйте QR-код для авторизации',
-        githubConnected: ({ login }: { login: string }) => `Подключен как @${login}`,
-        connectGithubAccount: 'Подключить аккаунт GitHub',
 
         // Dynamic settings messages
         accountConnected: ({ service }: { service: string }) => `Аккаунт ${service} подключен`,
@@ -437,8 +434,6 @@ export const ru: TranslationStructure = {
         linkNewDeviceSubtitle: 'Отсканируйте QR-код для привязки устройства',
         profile: 'Профиль',
         name: 'Имя',
-        github: 'GitHub',
-        tapToDisconnect: 'Нажмите для отключения',
         server: 'Сервер',
         backup: 'Резервная копия',
         backupDescription: 'Ваш секретный ключ - единственный способ восстановить ваш аккаунт. Сохраните его в безопасном месте, например в менеджере паролей.',
@@ -512,8 +507,6 @@ export const ru: TranslationStructure = {
         developerMode: 'Режим разработчика',
         developerModeEnabled: 'Режим разработчика включен',
         developerModeDisabled: 'Режим разработчика отключен',
-        disconnectGithub: 'Отключить GitHub',
-        disconnectGithubConfirm: 'Вы уверены, что хотите отключить аккаунт GitHub?',
         disconnect: 'Отключить',
         failedToConnectTerminal: 'Не удалось подключить терминал',
         cameraPermissionsRequiredToConnectTerminal: 'Для подключения терминала требуется доступ к камере',
