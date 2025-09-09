@@ -3,11 +3,11 @@
   "main": "index.ts",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start",
-    "start:local-server": "PUBLIC_EXPO_DANGEROUSLY_LOG_TO_SERVER_FOR_AI_AUTO_DEBUGGING=1 EXPO_PUBLIC_DEBUG=1 EXPO_PUBLIC_HAPPY_SERVER_URL=https://lanpangzi-3005.cpolar.top  expo start -c",
-    "web": "expo start --web",
-    "web:local": "expo start --web --port 3000",
-    "web:local-server": "PUBLIC_EXPO_DANGEROUSLY_LOG_TO_SERVER_FOR_AI_AUTO_DEBUGGING=1 EXPO_PUBLIC_DEBUG=1 EXPO_PUBLIC_DEBUG=1 EXPO_PUBLIC_HAPPY_SERVER_URL=https://lanpangzi-3005.cpolar.top expo start --web --host lan",
+    "start": "expo start --port 8082",
+    "start:local-server": "PUBLIC_EXPO_DANGEROUSLY_LOG_TO_SERVER_FOR_AI_AUTO_DEBUGGING=1 EXPO_PUBLIC_DEBUG=1 EXPO_PUBLIC_HAPPY_SERVER_URL=https://lanpangzi-3005.cpolar.top  expo start -c --port 8082",
+    "web": "expo start --web --port 8082",
+    "web:local": "expo start --web --port 8082",
+    "web:local-server": "PUBLIC_EXPO_DANGEROUSLY_LOG_TO_SERVER_FOR_AI_AUTO_DEBUGGING=1 EXPO_PUBLIC_DEBUG=1 EXPO_PUBLIC_DEBUG=1 EXPO_PUBLIC_HAPPY_SERVER_URL=https://lanpangzi-3005.cpolar.top expo start --web --host lan --port 8082",
     "test": "vitest",
     "typecheck": "tsc --noEmit",
     "generate-theme": "tsx sources/theme.gen.ts"

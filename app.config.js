@@ -1,8 +1,6 @@
-const variant = process.env.APP_ENV || 'development';
+const variant = 'production';
 const name = {
-    development: "Happy (dev)",
-    preview: "Happy (preview)",
-    production: "Happy"
+    production: "Distiller-Happy"
 }[variant];
 
 export default {
@@ -29,7 +27,8 @@ export default {
             "expo-web-browser"
         ],
         experiments: {
-            typedRoutes: true
+            typedRoutes: true,
+            baseUrl: "/happy/client"
         },
         extra: {
             router: {

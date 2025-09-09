@@ -1,6 +1,6 @@
 // Single-user mode: simplified server configuration
 
-const DEFAULT_SERVER_URL = process.env.EXPO_PUBLIC_HAPPY_SERVER_URL || 'https://192.168.31.116:3005';
+const DEFAULT_SERVER_URL = process.env.EXPO_PUBLIC_HAPPY_SERVER_URL || 'https://127.0.0.1:3005';
 
 export function getServerUrl(): string {
     // If explicitly set via environment variable, use that
@@ -10,8 +10,8 @@ export function getServerUrl(): string {
     
     // In web environment, use current origin + /server for reverse proxy
     if (typeof window !== 'undefined') {
-        console.log("server url: window.location.origin + '/server'");
-        return window.location.origin + '/server';
+        console.log("server url: window.location.origin + '/happy/server'");
+        return window.location.origin + '/happy/server';
     }
     
     // Fallback for non-web environments
